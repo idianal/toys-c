@@ -1,0 +1,4 @@
+foo-bar
+=======
+
+`foo-bar` is a minimal starter project in c. It supports basic build automation (GNU Make) and unit testing (Unity).
