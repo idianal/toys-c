@@ -1,6 +1,5 @@
 #include "foo.h"
 
-char * foo(void)
-{
+char * foo(void) {
     return "foo";
 }

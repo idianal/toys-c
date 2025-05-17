@@ -2,8 +2,7 @@
 #include "foo.h"
 #include "bar.h"
 
-int main(void)
-{
+int main(void) {
     printf("%s\n", foo());
     printf("%s\n", bar());
 }
