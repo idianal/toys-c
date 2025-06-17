@@ -16,10 +16,15 @@
 
 #define MAX_PENDING_CONNECTIONS 10
 
+void print_usage_guide()
+{
+    printf("Usage: server-stream <port>\n");
+    printf("Port must be a number between 1024 and 65535\n");
+}
+
 void validate_args(int argc, char ** argv) {
     if (argc != 2) {
-        printf("Usage: server-stream <port>\n");
-        printf("Port must be a number between 1024 and 65535\n");
+        print_usage_guide();
         exit(1);
     }
 
@@ -28,8 +33,7 @@ void validate_args(int argc, char ** argv) {
     long port_num = strtol(port, NULL, 0);
 
     if (errno != 0 || port_num < 1024 || port_num > 65535) {
-        printf("Usage: server-stream <port>\n");
-        printf("Port must be a number between 1024 and 65535\n");
+        print_usage_guide();
         exit(1);
     }
 }
@@ -96,13 +100,13 @@ int bind_to_socket(struct addrinfo * socket_info) {
     return socket_num_listener;
 }
 
-void wait_for_requests(int socket_num_listener) {
+void wait_for_requests(int socket_num_listener, char * host_name) {
     if (listen(socket_num_listener, MAX_PENDING_CONNECTIONS) == -1) {
         perror("Failed to listen to requests");
         exit(1);
     }
 
-    printf("Waiting for requests...\n");
+    printf("%s: Waiting for requests...\n", host_name);
 }
 
 void reap_dead_process(int signal_num) {
@@ -137,13 +141,12 @@ void get_host_name(char * result, int length) {
 }
 
 void * get_ip(struct sockaddr * address) {
-    if (address->sa_family == AF_INET) {
+    if (address->sa_family == AF_INET)
         // IPv4
         return &(((struct sockaddr_in *)address)->sin_addr);
-    } else {
+    else
         // IPv6
         return &(((struct sockaddr_in6 *)address)->sin6_addr);
-    }
 }
 
 void process_request(int socket_num_listener, char * host_name) {
@@ -222,14 +225,14 @@ int main(int argc, char ** argv) {
     struct addrinfo * socket_info;
     get_socket_info(argv[1], &socket_info);
 
+    char host_name[HOST_NAME_MAX + 1];
+    get_host_name(host_name, sizeof(host_name));
+
     int socket_num_listener = bind_to_socket(socket_info);
-    wait_for_requests(socket_num_listener);
+    wait_for_requests(socket_num_listener, host_name);
 
     freeaddrinfo(socket_info);
     set_signal_handling();
-
-    char host_name[HOST_NAME_MAX + 1];
-    get_host_name(host_name, sizeof(host_name));
 
     process_request(socket_num_listener, host_name);
 
