@@ -141,7 +141,7 @@ void * get_ip(struct sockaddr * address) {
         return &(((struct sockaddr_in6 *)address)->sin6_addr);
 }
 
-void process_request(int socket_num, char * host_name) {
+void receive_packets(int socket_num, char * host_name) {
     int num_bytes;
     int max_length = 100;
     char buffer[max_length];
@@ -197,7 +197,7 @@ int main(int argc, char ** argv) {
     freeaddrinfo(socket_info);
     set_signal_handling();
 
-    process_request(socket_num, host_name);
+    receive_packets(socket_num, host_name);
 
     return 0;
 }
