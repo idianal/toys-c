@@ -1,20 +1,22 @@
-toys-c
-======
+= toys-c
+Al Idian <al.idian@acm.org>
+:description: A collection of (very) small programs in c
 
 `toys` is a collection of (very) small programs, each meant to show just one or two competencies.
 
+Setup:
 
-Setup
------
+[source,bash]
+----
+# Start a toolbox container
+docker run --name toys-c -it -v "$(pwd)":/home/idianal/toys-c idianal/toolbox
 
-## Start a toolbox container using Docker
-$ sudo docker run --name toys-c -it -v "$(pwd)":/home/idianal/toys-c idianal/toolbox
+# Inside the container, install required packages
+apt update
+apt install -y build-essential
 
-## Inside the container, install required packages
-$ sudo apt update
-$ sudo apt install -y build-essential
-
-## Test the environment
-$ cd toys-c/foo-bar
-$ git clone https://github.com/ThrowTheSwitch/Unity.git unity
-$ make -s test
+# Test the environment
+cd toys-c/foo-bar
+git clone https://github.com/ThrowTheSwitch/Unity.git unity
+make -s test
+----
