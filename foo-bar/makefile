@@ -1,69 +1,70 @@
-# =========
-# Variables
-# =========
-
 PROGRAM_NAME = foo-bar
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -std=c23 -MMD -MP
 
-BINARY_DIR = binary
-OBJECT_DIR = object
-SOURCE_DIR = source
+BIN_DIR = binary
+OBJ_DIR = object
+SRC_DIR = source
 
 TEST_DIR = test
-TEST_BINARY_DIR = $(TEST_DIR)/$(BINARY_DIR)
-TEST_OBJECT_DIR = $(TEST_DIR)/$(OBJECT_DIR)
-TEST_SOURCE_DIR = $(TEST_DIR)/$(SOURCE_DIR)
+TEST_BIN_DIR = $(TEST_DIR)/$(BIN_DIR)
+TEST_OBJ_DIR = $(TEST_DIR)/$(OBJ_DIR)
+TEST_SRC_DIR = $(TEST_DIR)/$(SRC_DIR)
 
-OBJECTS = foo.o bar.o
-SOURCE_OBJECTS = $(addprefix $(OBJECT_DIR)/, $(OBJECTS))
-TEST_OBJECTS = $(addprefix $(TEST_OBJECT_DIR)/test-, $(OBJECTS)) \
-	$(addprefix $(TEST_OBJECT_DIR)/test-runners/test-runner-, $(OBJECTS))
+OBJS = foo.o bar.o
+SRC_OBJS = $(addprefix $(OBJ_DIR)/, $(OBJS))
+TEST_OBJS = $(addprefix $(TEST_OBJ_DIR)/test-, $(OBJS)) \
+    $(addprefix $(TEST_OBJ_DIR)/test-runners/test-runner-, $(OBJS))
 
 UNITY_DIR = unity
 UNITY_FLAGS = -DUNITY_FIXTURE_NO_EXTRAS
-TEST_FILES = $(UNITY_DIR)/src/unity.c \
-	$(UNITY_DIR)/extras/fixture/src/unity_fixture.c
-TEST_SOURCES = $(UNITY_DIR)/src \
-	$(UNITY_DIR)/extras/fixture/src \
-	$(SOURCE_DIR)
-TEST_INCLUDES = $(addprefix -I, $(TEST_SOURCES))
+UNITY_CFLAGS = -Wall -Wextra -std=c23 $(UNITY_FLAGS)
+UNITY_OBJS = $(UNITY_DIR)/src/unity.o \
+    $(UNITY_DIR)/extras/fixture/src/unity_fixture.o
+TEST_SRCS = $(UNITY_DIR)/src \
+    $(UNITY_DIR)/extras/fixture/src \
+    $(SRC_DIR)
+TEST_INCS = $(addprefix -I, $(TEST_SRCS))
+TEST_DEPS = $(TEST_OBJ_DIR)/test-runners/run-tests.o \
+    $(TEST_OBJS) \
+    $(SRC_OBJS) \
+    $(UNITY_OBJS)
 
+-include $(wildcard $(OBJ_DIR)/*.d \
+    $(TEST_OBJ_DIR)/*.d \
+    $(TEST_OBJ_DIR)/test-runners/*.d)
 
-# =====
-# Rules
-# =====
+.PHONY: run build test clean
 
 run: build
-	./$(BINARY_DIR)/$(PROGRAM_NAME)
+	./$(BIN_DIR)/$(PROGRAM_NAME)
 
-build: $(OBJECT_DIR)/main.o $(SOURCE_OBJECTS) | $(BINARY_DIR)
-	cc $(CFLAGS) -o $(BINARY_DIR)/$(PROGRAM_NAME) $^
+build: $(OBJ_DIR)/main.o $(SRC_OBJS) | $(BIN_DIR)
+	$(CC) $(CFLAGS) -o $(BIN_DIR)/$(PROGRAM_NAME) $^
 
-$(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.c | $(OBJECT_DIR)
-	cc -c $(CFLAGS) -o $@ $<
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+	$(CC) -c $(CFLAGS) -o $@ $<
 
-test: $(TEST_OBJECT_DIR)/test-runners/run-tests.o $(TEST_OBJECTS) $(SOURCE_OBJECTS) | $(TEST_BINARY_DIR)
-	cc $(CFLAGS) $(UNITY_FLAGS) -o $(TEST_BINARY_DIR)/test-$(PROGRAM_NAME) $^ $(TEST_FILES) $(TEST_INCLUDES)
-	./$(TEST_BINARY_DIR)/test-$(PROGRAM_NAME)
+test: $(TEST_DEPS) | $(TEST_BIN_DIR)
+	$(CC) $(CFLAGS) $(UNITY_FLAGS) -o $(TEST_BIN_DIR)/test-$(PROGRAM_NAME) $^
+	./$(TEST_BIN_DIR)/test-$(PROGRAM_NAME)
 
-$(TEST_OBJECT_DIR)/test-runners/%.o: $(TEST_SOURCE_DIR)/test-runners/%.c | $(TEST_OBJECT_DIR)
-	cc -c $(CFLAGS) $(UNITY_FLAGS) -o $@ $< $(TEST_INCLUDES)
+$(TEST_OBJ_DIR)/test-runners/%.o: \
+    $(TEST_SRC_DIR)/test-runners/%.c | \
+    $(TEST_OBJ_DIR)
+	$(CC) -c $(CFLAGS) $(UNITY_FLAGS) -o $@ $< $(TEST_INCS)
 
-$(TEST_OBJECT_DIR)/test-%.o: $(TEST_SOURCE_DIR)/test-%.c | $(TEST_OBJECT_DIR)
-	cc -c $(CFLAGS) $(UNITY_FLAGS) -o $@ $< $(TEST_INCLUDES)
+$(TEST_OBJ_DIR)/test-%.o: $(TEST_SRC_DIR)/test-%.c | $(TEST_OBJ_DIR)
+	$(CC) -c $(CFLAGS) $(UNITY_FLAGS) -o $@ $< $(TEST_INCS)
 
-$(BINARY_DIR):
-	mkdir $(BINARY_DIR)
+$(UNITY_DIR)/%.o: $(UNITY_DIR)/%.c
+	$(CC) -c $(UNITY_CFLAGS) -o $@ $< $(TEST_INCS)
 
-$(OBJECT_DIR):
-	mkdir $(OBJECT_DIR)
+$(BIN_DIR) $(OBJ_DIR) $(TEST_BIN_DIR):
+	mkdir -p $@
 
-$(TEST_BINARY_DIR):
-	mkdir $(TEST_BINARY_DIR)
-
-$(TEST_OBJECT_DIR):
-	mkdir $(TEST_OBJECT_DIR)
-	mkdir $(TEST_OBJECT_DIR)/test-runners
+$(TEST_OBJ_DIR):
+	mkdir -p $@ $@/test-runners
 
 clean:
-	rm -rf $(BINARY_DIR) $(OBJECT_DIR) $(TEST_BINARY_DIR) $(TEST_OBJECT_DIR)
+	rm -rf $(BIN_DIR) $(OBJ_DIR) $(TEST_BIN_DIR) $(TEST_OBJ_DIR)
+	rm -f $(UNITY_OBJS)
