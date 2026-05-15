@@ -1,3 +1,3 @@
 = foo-bar
 Al Idian <al.idian@acm.org>
-:description: `foo-bar` is a minimal starter project in c. It supports basic build automation (GNU Make) and unit testing (Unity).
+:description: `foo-bar` is a minimal starter project in C. It supports basic build automation (GNU Make) and unit testing (Unity).

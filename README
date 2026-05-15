@@ -1,6 +1,6 @@
 = toys-c
 Al Idian <al.idian@acm.org>
-:description: A collection of (very) small programs in c
+:description: A collection of (very) small programs in C
 
 `toys` is a collection of (very) small programs, each meant to show just one or two competencies.
 
